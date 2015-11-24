@@ -4,6 +4,7 @@ obj-$(CONFIG_CPU_FREQ)			+= cpufreq.o freq_table.o
 obj-$(CONFIG_CPU_FREQ_STAT)             += cpufreq_stats.o
 
 # CPUfreq governors 
+obj-$(CONFIG_CPU_FREQ_GOV_BIOSHOCK)     += cpufreq_bioshock.o
 obj-$(CONFIG_CPU_FREQ_GOV_CONSERVATIVE) += cpufreq_conservative.o
 obj-$(CONFIG_CPU_FREQ_GOV_INTELLIACTIVE)+= cpufreq_intelliactive.o
 obj-$(CONFIG_CPU_FREQ_GOV_INTERACTIVE)  += cpufreq_interactive.o

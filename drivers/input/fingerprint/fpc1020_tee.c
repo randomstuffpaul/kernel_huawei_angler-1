@@ -83,6 +83,7 @@ struct fpc1020_data {
 	u32 max_speed_hz;
 	bool clocks_enabled;
 	bool clocks_suspended;
+	struct input_dev *input_dev;
 };
 
 static int vreg_setup(struct fpc1020_data *fpc1020, const char *name,
@@ -440,6 +441,13 @@ static irqreturn_t fpc1020_irq_handler(int irq, void *handle)
 
 	sysfs_notify(&fpc1020->dev->kobj, NULL, dev_attr_irq.attr.name);
 
+	if (!is_display_on()) {
+		input_report_key(fpc1020->input_dev, KEY_FINGERPRINT, 1);
+		input_sync(fpc1020->input_dev);
+		input_report_key(fpc1020->input_dev, KEY_FINGERPRINT, 0);
+		input_sync(fpc1020->input_dev);
+	}
+
 	return IRQ_HANDLED;
 }
 
@@ -568,6 +576,11 @@ static int fpc1020_probe(struct platform_device* pdev)
 	fpc1020->clocks_enabled = false;
 	fpc1020->clocks_suspended = false;
 	fpc1020->prepared = false;
+
+	rc = fpc1020_input_init(fpc1020);
+	if (rc)
+		goto exit;
+
 	irqf = IRQF_TRIGGER_RISING | IRQF_ONESHOT;
 	if (of_property_read_bool(dev->of_node, "fpc,enable-wakeup")) {
 		irqf |= IRQF_NO_SUSPEND;
@@ -615,6 +628,9 @@ exit:
 static int fpc1020_remove(struct platform_device* pdev)
 {
 	struct fpc1020_data *fpc1020 = dev_get_drvdata(&pdev->dev);
+
+	if (fpc1020->input_dev != NULL)
+		input_free_device(fpc1020->input_dev);
 
 	sysfs_remove_group(&fpc1020->dev->kobj, &attribute_group);
 	mutex_destroy(&fpc1020->lock);
